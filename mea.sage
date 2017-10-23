@@ -48,10 +48,10 @@ def define_vars(ndims, const_v = False, const_g = False):
 
     if const_g:
         g_c = var('G_0')
-        g = lambda x : g_c
+        g = lambda t, x : g_c
     else:
         g_f = function('G')
-        g = lambda x : g_f(*x)
+        g = lambda t, x : g_f(t, *x)
 
     return t, dt, x, dx, e, psi, g, v
 
@@ -67,12 +67,12 @@ def mea(t, dt, x, dx, psi, g, v, flux_f, ndims):
         err_v[d] = err_v[d] - dt / 2 * diff(err_v[d], t) + dt ^ 2 / 12 * diff(err_v[d], t, t)
         err_v[d] = truncate_to_order(err_v[d], ORD, dt, dx)
 
-        rhs += diff(err_v[d], x[d]) / g(x)
+        rhs += diff(err_v[d], x[d])
        
         # make it actual error rather than error + flux
         err_v[d] += psi(t, x) * v[d](t, x) 
 
-    dt_psi = (diff(psi(t, x), t) == rhs)
+    dt_psi = (diff(psi(t, x), t) == (rhs / g(t, x) - diff(g(t, x), t) / g(t, x) * psi(t, x)))
 
     # constructing time derivatives that will be substituted
     dts = [dt_psi, diff(dt_psi, t)]

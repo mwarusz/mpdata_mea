@@ -15,7 +15,7 @@ def upwind(p, g, v, sign_v, dt, dx, e, ndims):
         for d in range(ndims):
             f1 = upwind_flux(d, p, v, sign_v, dt, dx, e)(t, x + 1 / 2 * e[d])
             f2 = upwind_flux(d, p, v, sign_v, dt, dx, e)(t, x - 1 / 2 * e[d])
-            new_p = new_p - (f1 - f2) / g(x)
+            new_p = (new_p - (f1 - f2) / g(t, x))
         return ret_helper(new_p, dt, dx)
     return ret
 
@@ -58,11 +58,17 @@ def antidiffusive_v(p, g, v, sign_v, dt, dx, e, ndims):
 
 def antidiffusive_v_d(d, p, g, v, sign_v, dt, dx, e, ndims):
     def ret(t, x):
-        gmid = (g(x + 1 / 2 * e[d]) + g(x - 1 / 2 * e[d])) / 2
+        pmod = lambda t, x : g(t, x) / g(t + dt, x) * p(t, x)
+        #pmod = lambda t, x : p(t, x)
+        gmid = (g(t, x + 1 / 2 * e[d]) + g(t, x - 1 / 2 * e[d])) / 2
+        gt = (
+                 g(t + dt, x + 1 / 2 * e[d]) + g(t + dt, x - 1 / 2 * e[d])
+               - g(t     , x + 1 / 2 * e[d]) - g(t     , x - 1 / 2 * e[d])
+             ) / (2 * dt)
         a1 = (
               (sign_v[d] * v[d](t, x) - dt / dx[d] * v[d](t, x) ** 2 / gmid) *  
-              (p(t, x + 1 / 2 * e[d]) - p(t, x - 1 / 2 * e[d])) / 
-              (p(t, x + 1 / 2 * e[d]) + p(t, x - 1 / 2 * e[d]))
+              (pmod(t, x + 1 / 2 * e[d]) - pmod(t, x - 1 / 2 * e[d])) / 
+              (pmod(t, x + 1 / 2 * e[d]) + pmod(t, x - 1 / 2 * e[d]))
              )
         a2 = 0
         a3 = (
@@ -71,6 +77,8 @@ def antidiffusive_v_d(d, p, g, v, sign_v, dt, dx, e, ndims):
                   v[d](t, x + e[d]) - v[d](t, x - e[d])
                  ) / dx[d]
              )
+
+        a4 = - 1 / 2 * v[d](t, x) / gmid * gt
         
         for dd in range(ndims):
             if dd == d:
@@ -83,11 +91,11 @@ def antidiffusive_v_d(d, p, g, v, sign_v, dt, dx, e, ndims):
 
             a2 += (
                   - 1 / 2 * v[d](t, x) * vmid / gmid *
-                  (p(t, x + 1 / 2 * e[d] + 1 * e[dd]) + p(t, x - 1 / 2 * e[d] + 1 * e[dd]) -
-                   p(t, x + 1 / 2 * e[d] - 1 * e[dd]) - p(t, x - 1 / 2 * e[d] - 1 * e[dd]) 
+                  (pmod(t, x + 1 / 2 * e[d] + 1 * e[dd]) + pmod(t, x - 1 / 2 * e[d] + 1 * e[dd]) -
+                   pmod(t, x + 1 / 2 * e[d] - 1 * e[dd]) - pmod(t, x - 1 / 2 * e[d] - 1 * e[dd]) 
                   ) / 
-                  (p(t, x + 1 / 2 * e[d] + 1 * e[dd]) + p(t, x - 1 / 2 * e[d] + 1 * e[dd]) +
-                   p(t, x + 1 / 2 * e[d] - 1 * e[dd]) + p(t, x - 1 / 2 * e[d] - 1 * e[dd]) 
+                  (pmod(t, x + 1 / 2 * e[d] + 1 * e[dd]) + pmod(t, x - 1 / 2 * e[d] + 1 * e[dd]) +
+                   pmod(t, x + 1 / 2 * e[d] - 1 * e[dd]) + pmod(t, x - 1 / 2 * e[d] - 1 * e[dd]) 
                   )
                   ) / dx[dd]
 
@@ -99,6 +107,10 @@ def antidiffusive_v_d(d, p, g, v, sign_v, dt, dx, e, ndims):
                     ) / dx[dd]
                   )
             
-        a = a1 + dt * (a2 + a3)
-        return ret_helper(a, dt, dx)
+        a = a1 + dt * (a2 + a3 + a4) 
+        test = ret_helper(a, dt, dx)
+        print "TEST"
+        print test
+        print "ENDTEST"
+        return test
     return ret
