@@ -1,4 +1,4 @@
-### [SageMath](https://sagemath.org) scripts used in the paper *"MPDATA: Third-order accuracy for arbitrary flows"*.
+### [SageMath](https://sagemath.org) scripts used in the paper *["MPDATA: Third-order accuracy for variable flows" (J. Comput. Phys. 359 2018)](https://www.sciencedirect.com/science/article/pii/S0021999118300159)*.
 
 ### Requirements
 - SageMath (known to work in the version 8.0)
