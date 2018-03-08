@@ -74,4 +74,3 @@ def test_mpdata(ndims, time_ext, space_int, sign_v, sign_av, niters):
                 )
         difference = (err_v[d] - exact).expand().simplify()
         assert(difference == 0)
-test_mpdata(1, True, False, 1, 1, 2)
